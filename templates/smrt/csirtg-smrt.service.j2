@@ -2,12 +2,14 @@
 Description=csirtg-smrt service
 
 [Service]
+PermissionsStartOnly=true
 Type=simple
 User={{ smrt_user | default(smrt.user) }}
 Group={{ smrt_group | default(smrt.group) }}
-PIDFile=/run/csirtg-smrt.pid
 RuntimeDirectory=smrt
-ExecStart={{ router_bin_path | default ('/usr/local/bin') }}/csirtg-smrt --remember --service --client cif --fireball --delay 5 --goback 7 --config /etc/cif/csirtg-smrt.yml
+RuntimeDirectoryMode=0775
+PIDFile=/run/smrt/csirtg-smrt.pid
+ExecStart={{ cif_venv | default ('/usr/local') }}/bin/csirtg-smrt -v --no-verify-ssl --skip-invalid --remember --service --client cif --fireball --delay 5 --config /etc/cif/csirtg-smrt.yml
 KillMode=process
 Restart=on-failure
 KillSignal=SIGINT

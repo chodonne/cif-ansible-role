@@ -11,7 +11,7 @@
   shell:
     CIF_DATA_PATH={{ router_data_path | default(router.data_path) }}
     CIF_RUNTIME_PATH={{ router_runtime_path | default(router.runtime_path) }}
-    cif-store
+    {{ cif_venv | default ('/usr/local') }}/bin/cif-store
     --runtime-path {{ router_runtime_path | default(router.runtime_path) }}
     --store {{ router_store_store | default(router.store.store) }}
     --token-create-admin
@@ -31,7 +31,7 @@
   shell:
     CIF_DATA_PATH={{ router_data_path | default(router.data_path) }}
     CIF_RUNTIME_PATH={{ router_runtime_path | default(router.runtime_path) }}
-    cif-store
+    {{ cif_venv | default ('/usr/local') }}/bin/cif-store
     --store {{ router_store_store | default(router.store.store) }}
     --runtime-path {{ smrt_runtime_path | default(smrt.runtime_path) }}
     --token-create-smrt
@@ -51,7 +51,7 @@
   shell:
     CIF_DATA_PATH={{ router_data_path | default(router.data_path) }}
     CIF_RUNTIME_PATH={{ router_runtime_path | default(router.runtime_path) }}
-    cif-store
+    {{ cif_venv | default ('/usr/local') }}/bin/cif-store
     --store {{ router_store_store | default(router.store.store) }}
     --runtime-path {{ router_runtime_path | default(router.runtime_path) }}
     --token-create-hunter

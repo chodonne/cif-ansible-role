@@ -6,7 +6,7 @@ cif:
   etc_path: /etc/cif
   home: /home/cif
   user_config_path: /home/cif/.cif.yml
-  release_url: "https://github.com/csirtgadgets/bearded-avenger/archive"
+  release_url: "https://github.com/csirtgadgets/bearded-avenger"
 
 smrt:
   user: "{{ cif_user }}"

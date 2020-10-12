@@ -1,6 +1,6 @@
 ---
 - name: copy csirtg-smrt rules
-  command: cp -r "/tmp/bearded-avenger-{{ cif_version }}/rules/default/" "{{ smrt_rules_path | default(smrt.rules_path) }}"
+  command: cp -r "/tmp/bearded-avenger/rules/default/" "{{ smrt_rules_path | default(smrt.rules_path) }}"
   when: cif_build_sdist is undefined or cif_build_sdist == ""
 
 - name: copy csirtg-smrt rules

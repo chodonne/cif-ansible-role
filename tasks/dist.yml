@@ -1,42 +1,223 @@
 ---
 
 # pip stuff
-- name: upgrade pip
-  pip: name=pip extra_args="--upgrade"
+#- name: upgrade pip
+#  pip: name=pip extra_args="--upgrade"
 
-- name: upgrade cython
-  pip: name=cython extra_args="--upgrade"
+#- name: upgrade cython
+#  pip: name=cython extra_args="--upgrade"
 
 # cif
-- name: pull release from github
-  get_url:
-    url: "{{ cif.release_url }}/{{ cif_version | default(cif.version) }}.tar.gz"
-    dest: /tmp/bearded-avenger.tar.gz
-  when: GH_TOKEN is undefined or GH_TOKEN == ""
+#- name: pull release from github
+#  get_url:
+#    url: "{{ cif.release_url }}/{{ cif_version | default(cif.version) }}.tar.gz"
+#    dest: /tmp/bearded-avenger.tar.gz
+#  when: GH_TOKEN is undefined or GH_TOKEN == ""
 
 # github likes to throttle when
-- name: pull release from github
-  get_url:
-    url: "{{ cif.release_url }}/{{ cif_version | default(cif.version) }}.tar.gz"
-    dest: /tmp/bearded-avenger.tar.gz
-    headers: "Authorization: Token {{ GH_TOKEN }}"
-  when: GH_TOKEN is defined and GH_TOKEN != ""
+#- name: pull release from github
+#  get_url:
+#    url: "{{ cif.release_url }}/{{ cif_version | default(cif.version) }}.tar.gz"
+#    dest: /tmp/bearded-avenger.tar.gz
+#    headers: "Authorization: Token {{ GH_TOKEN }}"
+#  when: GH_TOKEN is defined and GH_TOKEN != ""
 
-- name: unarchive
-  unarchive: src=/tmp/bearded-avenger.tar.gz dest=/tmp/ remote_src=true
+#- name: unarchive
+#  unarchive: src=/tmp/bearded-avenger.tar.gz dest=/tmp/ remote_src=true
+#
+#- name: "sanitize {{ cif_release }}"
+#  set_fact: cif_release_dir="{{ cif_version | regex_replace('\/', '-') }}"
+#
+#- debug: msg="{{ cif_release_dir }}"
+#
+#- name: install requirements
+#  command: pip install -r dev_requirements.txt chdir=/tmp/bearded-avenger-{{ cif_release_dir }}
+#
+#- name: run tests
+#  command: python setup.py test chdir=/tmp/bearded-avenger-{{ cif_release_dir }}
+#
+#- name: install cif
+#  command: python setup.py install chdir=/tmp/bearded-avenger-{{ cif_release_dir }}
+#  environment:
+#    CIF_ENABLE_INSTALL: 1---
 
-- name: "sanitize {{ cif_release }}"
-  set_fact: cif_release_dir="{{ cif_version | regex_replace('\/', '-') }}"
+# https://www.jeffgeerling.com/blog/2017/add-path-global-path-ansible
+
+- name: create cif venv directory
+  file:
+    path:   "{{ cif_venv }}"
+    state:  directory
+    owner:  root
+    group:  cif
+    mode:   0750
+
+- name: add venv path for cif user
+  lineinfile:
+    dest: "{{ cif_home | default(router.home) }}/.profile"
+    line: 'export PATH="/cif_venv/bin:$PATH"'
+
+# pip stuff
+- name: upgrade pip
+  pip:
+    name: pip
+    extra_args: "--upgrade"
+    virtualenv: "{{ cif_venv }}"
+    virtualenv_python: python3.5
+
+- name: install specific setuptools due to maxmind error
+  pip:
+    name: 'setuptools<46'
+    extra_args: "--upgrade"
+    virtualenv: "{{ cif_venv }}"
+
+- name: upgrade cython
+  pip:
+    name: cython
+    extra_args: "--upgrade"
+    virtualenv: "{{ cif_venv }}"
+
+- name: install distribute
+  pip:
+    name: distribute
+    extra_args: "--upgrade"
+    virtualenv: "{{ cif_venv }}"
+
+- name: upgrade wheel
+  pip:
+    name: wheel
+    extra_args: "--upgrade"
+    virtualenv: "{{ cif_venv }}"
+
+- name: upgrade singledispatch
+  pip:
+    name: singledispatch
+    extra_args: "--upgrade"
+    virtualenv: "{{ cif_venv }}"
+
+#### csirtg-indicator install
+
+- name: pull master from csirtg-indicator repo
+  git:
+    repo:     https://github.com/csirtgadgets/csirtg-indicator-py-v1
+    depth:    1
+    dest:     /tmp/csirtg-indicator
+  register: git_output
+
+- debug:
+    var: git_output
+
+- name: install csirtg-indicator requirements
+  pip:
+    chdir: /tmp/csirtg-indicator
+    requirements: requirements.txt
+    virtualenv: "{{ cif_venv }}"
+  register: pip_output
+
+- debug:
+    var: pip_output
+
+- name: install csirtg-indicator from github master branch
+  pip:
+    name: git+https://github.com/csirtgadgets/csirtg-indicator-py-v1
+    virtualenv: "{{ cif_venv }}"
+
+#### csirtg-smrt install
+
+- name: pull master from csirtg-smrt-v1 repo
+  git:
+    repo:     https://github.com/csirtgadgets/csirtg-smrt-v1
+    depth:    1
+    dest:     /tmp/csirtg-smrt
+
+- name: install csirtg-smrt requirements
+  pip:
+    chdir: /tmp/csirtg-smrt
+    requirements: requirements.txt
+    virtualenv: "{{ cif_venv }}"
+
+- name: install csirtg-smrt from github master branch
+  pip:
+    name: git+https://github.com/csirtgadgets/csirtg-smrt-v1
+    virtualenv: "{{ cif_venv }}"
+
+#### cifsdk-py-v3 install
+
+- name: pull master from cifsdk-py-v3 repo
+  git:
+    repo:     https://github.com/csirtgadgets/cifsdk-py-v3
+    depth: 1
+    dest:     /tmp/cifsdk-py-v3
+
+- name: install cifsdk-py-v3 requirements
+  pip:
+    chdir: /tmp/cifsdk-py-v3
+    requirements: requirements.txt
+    virtualenv: "{{ cif_venv }}"
+
+- name: install cifsdk-py-v3 from github master branch
+  pip:
+    name: git+https://github.com/csirtgadgets/cifsdk-py-v3
+    virtualenv: "{{ cif_venv }}"
+
+# bearded-avenger
+
+- name: pull release from github (no deploy key)
+  git:
+    repo: "{{ cif_release_url | default(cif.release_url) }}"
+    dest: /tmp/bearded-avenger
+    #version: "{{ cif_version }}"
+    key_file: '/tmp/github_deploy_key'
+    accept_hostkey: yes
+  when: github_deploy_key_file is undefined or github_deploy_key_file == ""
+
+- name: copy github deploy key
+  copy:
+    src: "{{ github_deploy_key_file }}"
+    dest: '/tmp/github_deploy_key'
+    mode: '0600'
+  when: github_deploy_key_file is defined and github_deploy_key_file != ""
+
+- name: pull release from github (deploy key exists)
+  git:
+    repo: "{{ cif_release_url }}"
+    dest: /tmp/bearded-avenger
+    #version: "{{ cif_version }}"
+    key_file: '/tmp/github_deploy_key'
+    accept_hostkey: yes
+  when: github_deploy_key_file is defined and github_deploy_key_file != ""
+
+#- name: unarchive bearded-avenger
+#  unarchive: src=/tmp/bearded-avenger.tar.gz dest=/tmp/ remote_src=true
+#  when: github_deploy_key_file is undefined or github_deploy_key_file == ""
+
+#- name: "set cif working dir (archive)"
+#  set_fact: cif_release_dir="/tmp/bearded-avenger-{{ cif_version | regex_replace('\/', '-') }}"
+#  when: github_deploy_key_file is undefined or github_deploy_key_file == ""
+#
+#- name: "set cif working dir (github ssh)"
+#  set_fact: cif_release_dir="/tmp/bearded-avenger"
+#  when: github_deploy_key_file is defined and github_deploy_key_file != ""
+
+- name: "set cif working dir"
+  set_fact: cif_release_dir="/tmp/bearded-avenger"
+  #when: github_deploy_key_file is defined and github_deploy_key_file != ""
 
 - debug: msg="{{ cif_release_dir }}"
 
 - name: install requirements
-  command: pip install -r dev_requirements.txt chdir=/tmp/bearded-avenger-{{ cif_release_dir }}
+  command: pip install -r dev_requirements.txt chdir={{ cif_release_dir }}
+  environment:
+    PATH: "{{ cif_venv }}/bin:{{ ansible_env.PATH }}"
 
-- name: run tests
-  command: python setup.py test chdir=/tmp/bearded-avenger-{{ cif_release_dir }}
+#- name: run tests
+#  command: python setup.py test chdir={{ cif_release_dir }}
+#  environment:
+#    PATH: "{{ cif_venv }}/bin:{{ ansible_env.PATH }}"
+#  become: yes
+#  become_user: cif
 
 - name: install cif
-  command: python setup.py install chdir=/tmp/bearded-avenger-{{ cif_release_dir }}
+  command: python setup.py install chdir={{ cif_release_dir }}
   environment:
+    PATH: "{{ cif_venv }}/bin:{{ ansible_env.PATH }}"
     CIF_ENABLE_INSTALL: 1
