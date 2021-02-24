@@ -1,7 +1,7 @@
 ---
-- name: "Check for version 16.04"
-  fail: msg="Must be version 16.04 or higher"
-  when: ansible_distribution_version | version_compare('16.04', '<')
+- name: "Check for version 18.04"
+  fail: msg="Must be version 18.04 or higher"
+  when: ansible_distribution_version | version_compare('18.04', '<')
 
 - name: install deps
   apt:
@@ -14,5 +14,4 @@
     - python3-pip
     - python3-venv
     - python3-virtualenv
-    - python-virtualenv
     - sqlite3

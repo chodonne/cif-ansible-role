@@ -20,7 +20,8 @@
     name: pip
     extra_args: "--upgrade"
     virtualenv: "{{ cif_venv }}"
-    virtualenv_python: python3.5
+    #virtualenv_python: python3.6
+    virtualenv_command: /usr/bin/python3 -m venv
 
 - name: install specific setuptools due to maxmind error
   pip:
@@ -31,12 +32,6 @@
 - name: upgrade cython
   pip:
     name: cython
-    extra_args: "--upgrade"
-    virtualenv: "{{ cif_venv }}"
-
-- name: install distribute
-  pip:
-    name: distribute
     extra_args: "--upgrade"
     virtualenv: "{{ cif_venv }}"
 

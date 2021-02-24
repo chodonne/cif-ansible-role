@@ -27,8 +27,12 @@
 - name: "Setting dhclient.conf"
   copy: src=router/ubuntu/bind_dhclient.conf dest=/etc/dhcp/dhclient.conf
 
-- name: "Setting /etc/resolvconf/resolv.conf.d/base"
-  copy: src=router/ubuntu/bind_head dest=/etc/resolvconf/resolv.conf.d/head
+#- name: "Setting /etc/resolvconf/resolv.conf.d/base"
+#  copy: src=router/ubuntu/bind_head dest=/etc/resolvconf/resolv.conf.d/head
+
+# https://moss.sh/name-resolution-issue-systemd-resolved/
+- name: "Setting systemd-resolved to use localhost"
+  copy: src=router/ubuntu/bind_resolved dest=/etc/systemd/resolved.conf
 
 - name: 'copying bind9 default'
   copy: src=router/ubuntu/bind_default dest=/etc/default/bind9
@@ -42,12 +46,12 @@
   # exit code returned by "service network restart".
   # This is to work-around a glitch in Ansible where
   # it detects a successful network restart as a failure.
-  command: perl -e 'my $exit_code = system("service networking restart"); sleep 3; $exit_code = $exit_code >> 8; exit($exit_code);'
+  #command: perl -e 'my $exit_code = system("service networking restart"); sleep 3; $exit_code = $exit_code >> 8; exit($exit_code);'
+  command: systemctl restart systemd-networkd
   when: DOCKER_BUILD is undefined or DOCKER_BUILD == "no"
 
-- name: Update resolvconf
-  command: resolvconf -u
-
+#- name: Update resolvconf
+#  command: resolvconf -u
 
 # geoip
 - name: create /etc/geopip.conf
