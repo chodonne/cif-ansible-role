@@ -6,6 +6,7 @@
     - "{{ smrt_runtime_path | default(smrt.runtime_path) }}"
     - "{{ smrt_rules_path | default(smrt.rules_path) }}"
     - "{{ smrt_cache_path | default(smrt.cache_path) }}"
+    - "{{ smrt_db_path | default(smrt.cache_path) }}"
 
 - name: copy /etc/defaults/smrt
   template: src=smrt/defaults.j2 dest=/etc/default/smrt mode=0660 owner="{{ smrt_user | default(smrt.user) }}" group="{{ smrt_group | default(smrt.group) }}"

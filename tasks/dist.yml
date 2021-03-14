@@ -95,7 +95,7 @@
     requirements: requirements.txt
     virtualenv: "{{ cif_venv }}"
 
-- name: install csirtg-smrt from github master branch
+- name: install csirtg-smrt from repo
   pip:
     name: git+https://github.com/csirtgadgets/csirtg-smrt-v1
     virtualenv: "{{ cif_venv }}"
